@@ -1,25 +1,31 @@
 import subprocess
 
 git_commands = [
-    ["git", "log", "--oneline"],
+    ("Repository History", ["git", "log", "--oneline"]),
+    ("Latest Commit", ["git", "log", "-1", "--oneline"]),
+    ("Current Branch", ["git", "branch", "--show-current"]),
+    ("Remote URLs", ["git", "remote", "-v"]),
+    ("Author", ["git", "shortlog", "-sn"])
 ]
 
-results = []
+print("-- READING STEINER --\n")
 
-for command in git_commands:
+for title, command in git_commands:
     result = subprocess.run(command, capture_output=True, text=True)
-    results.append(result.stdout)
+    lines = result.stdout.splitlines()
+    
+    print(f"=== {title} (Total lines: {len(lines)}) ===")
+    
+    for line in lines:
+        split_word = line.split()
+        if title == "Author":
+            author_name = ' '.join(split_word[1:])
+            print(f"Author is:{author_name}")
+            continue
 
-for result in results:
-    wordResult = result.splitlines()
-
-for word in wordResult:
-    splitWord = word.split()
-    print(f"{splitWord[0]} -> {" ".join(splitWord[1:])}")
-
-print("-- READING STEINER --")
-
-print("Git gave us:")
-
-for result in results:
-    print(result)
+        if split_word and len(split_word)>1:
+            print(f"{split_word[0]} -> {' '.join(split_word[1:])}")
+        else:
+            print(" ".join(split_word))
+            
+    print() 
