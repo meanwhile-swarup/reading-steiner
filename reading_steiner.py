@@ -19,6 +19,9 @@ for title, command in git_commands:
     if title == "Repository History":
         print(f"Total commits: {len(lines)}")
 
+    if title == "Author":
+        print(f"Total contributors: {len(lines)}")
+
     for line in lines:
         split_word = line.split()
         
