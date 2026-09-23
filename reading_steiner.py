@@ -20,17 +20,32 @@ for title, command in git_commands:
     if title == "Repository History":
         print(f"Total commits: {len(lines)}")
 
-        created = subprocess.run(
-            ["git", "log", "--reverse", "--format=%aI"],
+        first_commit = subprocess.run(
+            ["git", "log", "--reverse", "-1", "--format=%h|%aI|%s"],
             capture_output=True,
             text=True
-        )
+        ).stdout.strip()
 
-        if created.stdout.strip():
-            first_commit_date = datetime.fromisoformat(
-                created.stdout.splitlines()[0]
-            )
-            repo_age = datetime.now(first_commit_date.tzinfo) - first_commit_date
+        latest_commit = subprocess.run(
+            ["git", "log", "-1", "--format=%h|%aI|%s"],
+            capture_output=True,
+            text=True
+        ).stdout.strip()
+
+        if first_commit:
+            hash_, date, message = first_commit.split("|", 2)
+            print(f"First commit: {hash_} -> {message}")
+            print(f"First commit date: {date}")
+
+        if latest_commit:
+            hash_, date, message = latest_commit.split("|", 2)
+            print(f"Latest commit: {hash_} -> {message}")
+            print(f"Latest commit date: {date}")
+
+        if first_commit and latest_commit:
+            first_commit_date = datetime.fromisoformat(first_commit.split("|", 2)[1])
+            latest_commit_date = datetime.fromisoformat(latest_commit.split("|", 2)[1])
+            repo_age = latest_commit_date - first_commit_date
             print(f"Repository age: {repo_age.days} days")
 
     if title == "Author":
