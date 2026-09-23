@@ -1,4 +1,5 @@
 import subprocess
+from datetime import datetime
 
 git_commands = [
     ("Repository History", ["git", "log", "--oneline"]),
@@ -18,6 +19,19 @@ for title, command in git_commands:
 
     if title == "Repository History":
         print(f"Total commits: {len(lines)}")
+
+        created = subprocess.run(
+            ["git", "log", "--reverse", "--format=%aI"],
+            capture_output=True,
+            text=True
+        )
+
+        if created.stdout.strip():
+            first_commit_date = datetime.fromisoformat(
+                created.stdout.splitlines()[0]
+            )
+            repo_age = datetime.now(first_commit_date.tzinfo) - first_commit_date
+            print(f"Repository age: {repo_age.days} days")
 
     if title == "Author":
         print(f"Total contributors: {len(lines)}")
