@@ -24,7 +24,6 @@ for title, command in git_commands:
 
     print(f"=== {title} (Total lines: {len(lines)}) ===")
 
-    # Repository History
     if title == "Repository History":
         print(f"Total commits: {len(lines)}")
 
@@ -42,13 +41,11 @@ for title, command in git_commands:
 
         if first_commit:
             hash_, date, message = first_commit.split("|", 2)
-
             print(f"First commit: {hash_} -> {message}")
             print(f"First commit date: {date}")
 
         if latest_commit:
             hash_, date, message = latest_commit.split("|", 2)
-
             print(f"Latest commit: {hash_} -> {message}")
             print(f"Latest commit date: {date}")
 
@@ -62,19 +59,15 @@ for title, command in git_commands:
             )
 
             repo_age = latest_commit_date - first_commit_date
-
             print(f"Repository age: {repo_age.days} days")
 
-    # Authors
     if title == "Author":
         print(f"Total contributors: {len(lines)}")
 
-    # Files
     if title == "Files":
         print(f"Total tracked files: {len(lines)}")
         continue
 
-    # Repository Status
     if title == "Repository Status":
         if not lines:
             print("Working tree is clean")
@@ -84,12 +77,71 @@ for title, command in git_commands:
             for line in lines:
                 status = line[:2]
                 filename = line[3:]
-
                 print(f"{status} -> {filename}")
 
         continue
 
-    # Normal output
+    if title == "Current Branch":
+        branch = lines[0].strip() if lines else ""
+
+        if not branch:
+            print("Current branch: Unable to determine")
+            continue
+
+        print(f"Current branch: {branch}")
+
+        upstream_result = subprocess.run(
+            [
+                "git",
+                "rev-parse",
+                "--abbrev-ref",
+                "--symbolic-full-name",
+                "@{u}"
+            ],
+            capture_output=True,
+            text=True
+        )
+
+        upstream = upstream_result.stdout.strip()
+
+        if not upstream:
+            print("Tracking branch: None")
+            print("Branch is not connected to a remote branch")
+            continue
+
+        print(f"Tracking branch: {upstream}")
+
+        count_result = subprocess.run(
+            [
+                "git",
+                "rev-list",
+                "--left-right",
+                "--count",
+                f"HEAD...{upstream}"
+            ],
+            capture_output=True,
+            text=True
+        )
+
+        count = count_result.stdout.strip()
+
+        if count:
+            behind, ahead = count.split()
+
+            print(f"Commits ahead: {ahead}")
+            print(f"Commits behind: {behind}")
+
+            if ahead == "0" and behind == "0":
+                print("Branch status: Up to date")
+            elif ahead != "0" and behind == "0":
+                print("Branch status: Local commits need to be pushed")
+            elif ahead == "0" and behind != "0":
+                print("Branch status: Remote commits need to be pulled")
+            else:
+                print("Branch status: Branches have diverged")
+
+        continue
+
     for line in lines:
         split_word = line.split()
 
