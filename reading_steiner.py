@@ -7,17 +7,24 @@ git_commands = [
     ("Current Branch", ["git", "branch", "--show-current"]),
     ("Remote URLs", ["git", "remote", "-v"]),
     ("Author", ["git", "shortlog", "-sn"]),
-    ("Files", ["git", "ls-files"])
+    ("Files", ["git", "ls-files"]),
+    ("Repository Status", ["git", "status", "--short"])
 ]
 
 print("-- READING STEINER --\n")
 
 for title, command in git_commands:
-    result = subprocess.run(command, capture_output=True, text=True)
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True
+    )
+
     lines = result.stdout.splitlines()
 
     print(f"=== {title} (Total lines: {len(lines)}) ===")
 
+    # Repository History
     if title == "Repository History":
         print(f"Total commits: {len(lines)}")
 
@@ -35,11 +42,13 @@ for title, command in git_commands:
 
         if first_commit:
             hash_, date, message = first_commit.split("|", 2)
+
             print(f"First commit: {hash_} -> {message}")
             print(f"First commit date: {date}")
 
         if latest_commit:
             hash_, date, message = latest_commit.split("|", 2)
+
             print(f"Latest commit: {hash_} -> {message}")
             print(f"Latest commit date: {date}")
 
@@ -53,15 +62,34 @@ for title, command in git_commands:
             )
 
             repo_age = latest_commit_date - first_commit_date
+
             print(f"Repository age: {repo_age.days} days")
 
+    # Authors
     if title == "Author":
         print(f"Total contributors: {len(lines)}")
 
+    # Files
     if title == "Files":
         print(f"Total tracked files: {len(lines)}")
         continue
 
+    # Repository Status
+    if title == "Repository Status":
+        if not lines:
+            print("Working tree is clean")
+        else:
+            print(f"Changed files: {len(lines)}")
+
+            for line in lines:
+                status = line[:2]
+                filename = line[3:]
+
+                print(f"{status} -> {filename}")
+
+        continue
+
+    # Normal output
     for line in lines:
         split_word = line.split()
 
