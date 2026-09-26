@@ -1,6 +1,16 @@
 import subprocess
 from datetime import datetime
 
+check = subprocess.run(
+    ["git", "rev-parse", "--is-inside-work-tree"],
+    capture_output=True,
+    text=True
+)
+
+if check.returncode != 0:
+    print("Reading Steiner must be run inside a Git repository.")
+    exit()
+
 git_commands = [
     ("Repository History", ["git", "log", "--oneline"]),
     ("Latest Commit", ["git", "log", "-1", "--oneline"]),
