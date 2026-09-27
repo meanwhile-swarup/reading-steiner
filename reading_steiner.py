@@ -1,6 +1,17 @@
 import subprocess
 from datetime import datetime
 
+
+def run_git_command(command):
+    result = subprocess.run(
+        command,
+        capture_output=True,
+        text=True
+    )
+
+    return result.stdout.strip()
+
+
 check = subprocess.run(
     ["git", "rev-parse", "--is-inside-work-tree"],
     capture_output=True,
@@ -10,6 +21,7 @@ check = subprocess.run(
 if check.returncode != 0:
     print("Reading Steiner must be run inside a Git repository.")
     exit()
+
 
 git_commands = [
     ("Repository History", ["git", "log", "--oneline"]),
@@ -21,33 +33,26 @@ git_commands = [
     ("Repository Status", ["git", "status", "--short"])
 ]
 
+
 print("-- READING STEINER --\n")
 
-for title, command in git_commands:
-    result = subprocess.run(
-        command,
-        capture_output=True,
-        text=True
-    )
 
-    lines = result.stdout.splitlines()
+for title, command in git_commands:
+    output = run_git_command(command)
+    lines = output.splitlines()
 
     print(f"=== {title} (Total lines: {len(lines)}) ===")
 
     if title == "Repository History":
         print(f"Total commits: {len(lines)}")
 
-        first_commit = subprocess.run(
-            ["git", "log", "--reverse", "-1", "--format=%h|%aI|%s"],
-            capture_output=True,
-            text=True
-        ).stdout.strip()
+        first_commit = run_git_command(
+            ["git", "log", "--reverse", "-1", "--format=%h|%aI|%s"]
+        )
 
-        latest_commit = subprocess.run(
-            ["git", "log", "-1", "--format=%h|%aI|%s"],
-            capture_output=True,
-            text=True
-        ).stdout.strip()
+        latest_commit = run_git_command(
+            ["git", "log", "-1", "--format=%h|%aI|%s"]
+        )
 
         if first_commit:
             hash_, date, message = first_commit.split("|", 2)
@@ -100,19 +105,13 @@ for title, command in git_commands:
 
         print(f"Current branch: {branch}")
 
-        upstream_result = subprocess.run(
-            [
-                "git",
-                "rev-parse",
-                "--abbrev-ref",
-                "--symbolic-full-name",
-                "@{u}"
-            ],
-            capture_output=True,
-            text=True
-        )
-
-        upstream = upstream_result.stdout.strip()
+        upstream = run_git_command([
+            "git",
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{u}"
+        ])
 
         if not upstream:
             print("Tracking branch: None")
@@ -121,19 +120,13 @@ for title, command in git_commands:
 
         print(f"Tracking branch: {upstream}")
 
-        count_result = subprocess.run(
-            [
-                "git",
-                "rev-list",
-                "--left-right",
-                "--count",
-                f"HEAD...{upstream}"
-            ],
-            capture_output=True,
-            text=True
-        )
-
-        count = count_result.stdout.strip()
+        count = run_git_command([
+            "git",
+            "rev-list",
+            "--left-right",
+            "--count",
+            f"HEAD...{upstream}"
+        ])
 
         if count:
             behind, ahead = count.split()
